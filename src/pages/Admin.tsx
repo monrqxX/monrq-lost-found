@@ -1,0 +1,5 @@
+import AppNav from "../components/AppNav"; import { PageShell, GlassCard } from "../components/ui"; import { TOKENS } from "../lib/tokens"; import { useApiData } from "../hooks/useApiData";
+export default function Admin(){
+  const {data,error,loading}=useApiData<{items:number;claims:number;matches:number;users:number}>("/admin/summary");
+  return <><AppNav/><PageShell title="Admin" subtitle="Moderation and service overview">{error&&<div role="alert" style={{color:TOKENS.danger,marginBottom:12}}>{error}</div>}<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12}}>{([[data?.items,"Items"],[data?.claims,"Pending claims"],[data?.matches,"Matches"],[data?.users,"Profiles"]] as const).map(([value,label])=><GlassCard key={label} style={{textAlign:"center"}}><div style={{fontWeight:800,fontSize:24}}>{loading?"—":value??"—"}</div><div style={{color:TOKENS.muted2,fontSize:11,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase"}}>{label}</div></GlassCard>)}</div></PageShell></>;
+}

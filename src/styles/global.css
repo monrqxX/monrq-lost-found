@@ -1,0 +1,58 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body, #root { width: 100%; min-height: 100%; background: #04060A; }
+.landing-lock { overflow: hidden; height: 100vh; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior: none;
+  /* phone: promote scrolling to compositor */
+  -webkit-overflow-scrolling: touch;
+}
+* { -webkit-tap-highlight-color: transparent; }
+
+/* glass — desktop has blur, phone uses almost-no-blur (GPU saver) */
+.glass { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+@media (max-width: 768px){
+  .glass{ backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  html{ scroll-behavior: auto; } /* prevent smooth scroll jank on mobile */
+}
+
+/* --- 2D animations — subtle, GPU-only, less is more --- */
+@keyframes floatY {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -4px, 0); }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes softIn {
+  from { opacity: 0; transform: translate3d(0, 6px, 0) scale(0.99); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+.reveal { animation: fadeInUp 0.55s cubic-bezier(0.16,1,0.30,1) both; }
+.reveal-2 { animation: fadeInUp 0.55s cubic-bezier(0.16,1,0.30,1) 0.07s both; }
+.reveal-3 { animation: fadeInUp 0.55s cubic-bezier(0.16,1,0.30,1) 0.14s both; }
+.soft-enter { animation: softIn 0.6s cubic-bezier(0.16,1,0.30,1) both; }
+@media (max-width: 768px){
+  .reveal, .reveal-2, .reveal-3, .soft-enter { animation-duration: 0.38s !important; }
+}
+
+/* site rings wrapper — fixed, non-interactive, low-cost */
+.site-rings { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+.site-rings-inner { position: absolute; inset: 0; opacity: 0.9; }
+
+/* Scrollbar hide */
+::-webkit-scrollbar { display: none; }
+* { scrollbar-width: none; }
+
+/* Reduced motion — kill animations, save GPU */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

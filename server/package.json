@@ -1,0 +1,17 @@
+{
+  "name": "monrq-api",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": { "start": "node index.js", "dev": "node --watch index.js" },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.1.0",
+    "mongodb": "^6.20.0",
+    "@supabase/supabase-js": "2.117.3",
+    "zod": "^3.25.76"
+  }
+}

@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: monrq-lost-found
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci && npm run build && npm ci --prefix server
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: SERVE_FRONTEND
+        value: "true"
+      - key: MONGODB_DB
+        value: monrq
+      - key: MONGODB_URI
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
