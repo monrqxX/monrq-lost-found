@@ -15,6 +15,8 @@ export async function createApiApp(env) {
   const required = ["SUPABASE_URL", "SUPABASE_ANON_KEY", "MONGODB_URI", "MONGODB_DB"];
   for (const key of required) if (!env[key]) throw new Error(`Missing required environment variable: ${key}`);
   const supabaseUrl = env.SUPABASE_URL.replace(/\/$/, "");
+  const supabaseOrigin = new URL(supabaseUrl).origin;
+  const supabaseRealtimeOrigin = `wss://${new URL(supabaseUrl).host}`;
   const allowedOrigins = (env.APP_ORIGINS || "http://localhost:5173").split(",").map(x => x.trim()).filter(Boolean);
   const supabaseAuth = createClient(supabaseUrl, env.SUPABASE_ANON_KEY, { auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false } });
   const client = new MongoClient(env.MONGODB_URI, {
@@ -45,7 +47,13 @@ export async function createApiApp(env) {
 
   const app = express();
   app.disable("x-powered-by");
-  app.use(helmet());
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        "connect-src": ["'self'", supabaseOrigin, supabaseRealtimeOrigin],
+      },
+    },
+  }));
   app.use((req, res, next) => cors({
   origin(origin, callback) {
     let sameHostOrigin = false;

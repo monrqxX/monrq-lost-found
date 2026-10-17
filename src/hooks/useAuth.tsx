@@ -25,7 +25,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setUser(fromSupabase(session?.user || null)));
     return () => subscription.unsubscribe();
   }, []);
-  const login = async (email: string, password: string) => { requireConfigured(); const { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) throw error; };
+  const login = async (email: string, password: string) => {
+    requireConfigured();
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    setUser(fromSupabase(data.user));
+  };
   const register = async (name: string, email: string, password: string) => {
     requireConfigured();
     const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { display_name: name }, emailRedirectTo: `${location.origin}/verify-email` } });
