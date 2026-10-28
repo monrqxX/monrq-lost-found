@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import LandingPage from './components/LandingPage'
 import './styles/global.css'
@@ -39,10 +39,34 @@ function Protected({children}:{children:React.ReactNode}){
   if(!user) return <Navigate to="/login" replace/>
   return <>{children}</>
 }
+function AuthCallbackRedirect(){
+  const {user,loading,passwordRecovery,authEvent}=useAuth()
+  const {pathname,search}=useLocation()
+  const navigate=useNavigate()
+  useEffect(()=>{
+    const params=new URLSearchParams(search)
+    const hasCode=params.has('code')
+    const hasCallbackError=params.has('error')||params.has('error_description')
+
+    if(pathname==='/reset-password'&&hasCode&&!hasCallbackError) return
+    if(passwordRecovery||authEvent==='PASSWORD_RECOVERY'){
+      if(pathname!=='/reset-password') navigate('/reset-password',{replace:true})
+      return
+    }
+    if((!hasCode&&!hasCallbackError)||loading||(hasCode&&!authEvent)) return
+    if(user){
+      if(pathname!=='/dashboard') navigate('/dashboard',{replace:true})
+      return
+    }
+    if(pathname!=='/login') navigate('/login',{replace:true,state:{authError:'This sign-in link expired or could not be verified. Request a fresh link and try again.'}})
+  },[authEvent,loading,navigate,passwordRecovery,pathname,search,user])
+  return null
+}
 export default function App(){
   return (
     <AuthProvider>
       <BrowserRouter>
+        <AuthCallbackRedirect />
         <Suspense fallback={<Fallback/>}>
           <Routes>
             <Route path="/" element={<LandingPage/>} />

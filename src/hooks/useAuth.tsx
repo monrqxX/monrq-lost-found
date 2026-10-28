@@ -4,7 +4,7 @@ import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
 type User = { uid: string; email: string; displayName: string; photoURL?: string };
 type Ctx = {
-  user: User | null; loading: boolean;
+  user: User | null; loading: boolean; passwordRecovery: boolean; authEvent: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>; reset: (email: string) => Promise<void>; updatePassword: (password: string) => Promise<void>; loginWithGoogle: () => Promise<void>;
@@ -19,11 +19,27 @@ function requireConfigured() { if (!isSupabaseConfigured) throw new Error("Add V
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
+  const [authEvent, setAuthEvent] = useState<string | null>(null);
   useEffect(() => {
     if (!isSupabaseConfigured) { setLoading(false); return; }
-    supabase.auth.getSession().then(({ data, error }) => { if (!error) setUser(fromSupabase(data.session?.user || null)); setLoading(false); });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setUser(fromSupabase(session?.user || null)));
-    return () => subscription.unsubscribe();
+    let active = true;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!active) return;
+      setAuthEvent(event);
+      setUser(fromSupabase(session?.user || null));
+      if (event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
+      if (event === "SIGNED_OUT") setPasswordRecovery(false);
+    });
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (!active) return;
+      if (!error) setUser(fromSupabase(data.session?.user || null));
+    }).catch(() => {
+      // Keep the login screen usable if session restoration fails.
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => { active = false; subscription.unsubscribe(); };
   }, []);
   const login = async (email: string, password: string) => {
     requireConfigured();
@@ -40,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithGoogle = async () => { requireConfigured(); const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${location.origin}/dashboard` } }); if (error) throw error; };
   const logout = async () => { const { error } = await supabase.auth.signOut(); if (error) throw error; };
   const reset = async (email: string) => { requireConfigured(); const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/reset-password` }); if (error) throw error; };
-  const updatePassword = async (password: string) => { requireConfigured(); const { error } = await supabase.auth.updateUser({ password }); if (error) throw error; };
-  return <C.Provider value={{ user, loading, login, register, logout, reset, updatePassword, loginWithGoogle }}>{children}</C.Provider>;
+  const updatePassword = async (password: string) => { requireConfigured(); const { error } = await supabase.auth.updateUser({ password }); if (error) throw error; setPasswordRecovery(false); };
+  return <C.Provider value={{ user, loading, passwordRecovery, authEvent, login, register, logout, reset, updatePassword, loginWithGoogle }}>{children}</C.Provider>;
 };
 export const useAuth = () => useContext(C);

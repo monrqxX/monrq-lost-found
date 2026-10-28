@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button, Input, GlassCard } from "../components/ui";
 import { TOKENS } from "../lib/tokens";
 import Logo from "../components/Logo";
@@ -39,7 +39,7 @@ function GoogleButton({onClick, loading, label}:{onClick:()=>void; loading:boole
 }
 
 export function Login(){
-  const [email,setEmail]=useState(""); const [pw,setPw]=useState(""); const [err,setErr]=useState(""); const [loading,setLoading]=useState(false); const [gLoading,setGLoading]=useState(false);
+  const [email,setEmail]=useState(""); const [pw,setPw]=useState(""); const location=useLocation(); const [err,setErr]=useState(()=>((location.state as {authError?:string}|null)?.authError)||""); const [loading,setLoading]=useState(false); const [gLoading,setGLoading]=useState(false);
   const {login, loginWithGoogle}=useAuth(); const nav=useNavigate();
   const handleGoogle=async()=>{
     setErr(""); setGLoading(true);
